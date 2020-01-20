@@ -8,3 +8,5 @@ edition = "2018"
 
 [dependencies]
 ws = "0.9.1"
+encoding = "0.2"
+failure = "*"
