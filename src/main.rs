@@ -1,93 +1,143 @@
-use ws;
-use encoding;
-use ws::{listen, Handler, Sender, Message, Handshake, CloseCode, Error};
 use failure;
-use std::process::{Command,ExitStatus};
-use std::error::Error as StdError;
+use ws;
+use ws::{listen, CloseCode, Handler, Handshake, Message, Sender};
 mod common_ext;
 use common_ext::*;
-use std::process::Output;
-
-#[derive(Eq,PartialEq)]
-enum CurrentEncoding {
-    GBK,
-    UTF8
-}
-
-fn get_current_encoding()->Result<CurrentEncoding,failure::Error> {
-
-    let out = cmd_raw("chcp")?;
-    if out.status.success() {
-        let out = String::from_utf8_lossy(&out.stdout).to_string();
-        if out.contains("936") {
-            return Ok(CurrentEncoding::GBK);
-        } else {
-            return Ok(CurrentEncoding::UTF8);
-        }
-    }
-    return Err(failure::err_msg("get_current_encoding chcp fail"));
-}
-
-fn decoding_string(data:&Vec<u8>) ->Result<String,failure::Error> {
-    use encoding::{Encoding, DecoderTrap};
-    use encoding::all::GBK;
-    
-    if  get_current_encoding()? == CurrentEncoding::GBK {
-        return GBK.decode(data, DecoderTrap::Strict).map_err(|e|failure::format_err!("decoding fail {}",e.to_string()));
-    }
-    return Ok(String::from_utf8_lossy(data).to_string());
-}
-fn cmd(arg:&str) -> Result<String,failure::Error> {
-    let out  = cmd_raw(arg)?;
-    if out.status.success() {
-        return decoding_string(&out.stdout);
-    }
-    return decoding_string(&out.stderr);
-}
-fn cmd_raw(arg:&str) -> Result<Output,failure::Error> {
-    let output = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-                .arg("/C")
-                .arg(arg)
-                .output()?          
-    } else {
-        Command::new("sh")
-                .arg("-c")
-                .arg(arg)
-                .output()?
-    };
-    return Ok(output);
-}
+mod cmd;
 
 struct Server {
     out: Sender,
 }
 
+#[derive(Debug, PartialEq, Eq)]
+enum Ast {
+    //execute and wait output
+    Call(String),
+    //spawn
+    Spawn(String),
+}
+
+fn pick<T>(msg: &str, fs: Vec<(&str, Box<dyn FnOnce(String) -> T>)>) -> Result<T, failure::Error> {
+    for (prefix, f) in fs.into_iter() {
+        if msg.starts_with(prefix) {
+            let (_, data) = msg.split_at(prefix.len());
+            //means that the msg is ${prefix}${data} and that is invalid
+            if data.len() == data.trim_start().len() {
+                return Err(failure::format_err!("prefix should end with a whitespace"));
+            }
+            let data = data.trim();
+            return Ok(f(data.to_string()));
+        }
+    }
+    return Err(failure::format_err!("could not match any of prefix"));
+}
+
+impl Ast {
+    fn from_str(msg: &str) -> Result<Self, failure::Error> {
+        let ast = pick(
+            msg,
+            vec![
+                (
+                    "call",
+                    Box::new(|data: String| {
+                        return Ast::Call(data);
+                    }),
+                ),
+                (
+                    "spawn",
+                    Box::new(|data: String| {
+                        return Ast::Spawn(data);
+                    }),
+                ),
+            ],
+        );
+        return ast;
+    }
+}
+
+impl Ast {
+    fn do_stuff(&self) -> String {
+        let ret = || -> Result<String, failure::Error> {
+            match self {
+                Ast::Call(data) => {
+                    let ret = cmd::exec(format!("cmd /c {}", data))?;
+                    return Ok(ret);
+                }
+                Ast::Spawn(data) => {
+                    cmd::exec_without_wait(format!("cmd /c {}", data))?;
+                    return Ok("".to_string());
+                }
+            }
+        }();
+        match ret {
+            Ok(data) => {
+                return format!("success\n{}", data);
+            }
+            Err(e) => {
+                return format!("error\n{}", e.to_string());
+            }
+        }
+    }
+}
+
 impl Handler for Server {
-    fn on_open(&mut self, _: Handshake) -> Result<(),ws::Error> {
+    fn on_open(&mut self, _: Handshake) -> Result<(), ws::Error> {
         println!("client connect");
         Ok(())
     }
-    fn on_message(&mut self, msg: Message) -> Result<(),ws::Error> {
-        println!("msg is {}",msg);
-        let out = cmd(&msg.into_text()?).to_ws_err()?;
-        self.out.send(out)?;
+
+    fn on_message(&mut self, msg: Message) -> Result<(), ws::Error> {
+        println!("msg is {}", msg);
+        let ret = Ast::from_str(&msg.into_text()?)
+            .map(|a| a.do_stuff())
+            .unwrap_or_else(|e| format!("error\n{}", e));
+        self.out.send(ret)?;
         Ok(())
     }
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         match code {
             CloseCode::Normal => println!("The client is done with the connection."),
-            CloseCode::Away   => println!("The client is leaving the site."),
+            CloseCode::Away => println!("The client is leaving the site."),
             _ => println!("The client encountered an error: {}", reason),
         }
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_ast() {
+        let cmd = "call xxx";
+        let ast = Ast::from_str(cmd);
+        assert_eq!(Ast::Call("xxx".to_string()), ast.unwrap());
+        let cmd = "spawn xxx";
+        let ast = Ast::from_str(cmd);
+        assert_eq!(Ast::Spawn("xxx".to_string()), ast.unwrap());
+        let cmd = "spawn";
+        let ast = Ast::from_str(cmd);
+        assert!(ast.is_err());
+        let cmd = "call";
+        let ast = Ast::from_str(cmd);
+        assert!(ast.is_err());
+        let cmd = "callxxx";
+        let ast = Ast::from_str(cmd);
+        assert!(ast.is_err());
+        let cmd = "spawnxxx";
+        let ast = Ast::from_str(cmd);
+        assert!(ast.is_err());
+    }
 
-
+    #[ignore]
+    #[test]
+    fn test_cmd() {
+        let res = cmd::exec("git status").unwrap();
+        println!("res\n {}", res);
+    }
+}
 
 fn main() {
     println!("start server");
-    listen("0.0.0.0:3012", |out| Server { out: out } ).unwrap()
-  } 
+    listen("0.0.0.0:3012", |out| Server { out: out }).unwrap()
+}

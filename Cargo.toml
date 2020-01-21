@@ -10,3 +10,39 @@ edition = "2018"
 ws = "0.9.1"
 encoding = "0.2"
 failure = "*"
+log = "0.4.8"
+nom = "5.1.0"
+
+[dependencies.winapi]
+version = "0.3.8"
+features = [
+    "std",
+    "basetsd",
+    "combaseapi",
+    "errhandlingapi",
+    "evntrace",
+    "minwinbase",
+    "minwindef",
+    "oaidl",
+    "objbase",
+    "objidl",
+    "oleauto",
+    "rpcdce",
+    "timezoneapi",
+    "unknwnbase",
+    "wbemcli",
+    "winbase",
+    "windef",
+    "winerror",
+    "winnt",
+    "wmistr",
+    "wtypesbase",
+    "wtypes",
+    "commapi",
+    "psapi",
+    "tlhelp32",
+    "wow64apiset",
+    "namedpipeapi",
+    "synchapi",
+    "userenv",
+    "winuser",]
