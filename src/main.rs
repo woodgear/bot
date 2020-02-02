@@ -1,9 +1,11 @@
 use failure;
 use ws;
-use ws::{listen, CloseCode, Handler, Handshake, Message, Sender};
+use ws::{connect, listen, CloseCode, Handler, Handshake, Message, Sender};
 mod common_ext;
 use common_ext::*;
 mod cmd;
+use log::*;
+use structopt::StructOpt;
 
 struct Server {
     out: Sender,
@@ -82,12 +84,12 @@ impl Ast {
 
 impl Handler for Server {
     fn on_open(&mut self, _: Handshake) -> Result<(), ws::Error> {
-        println!("client connect");
+        info!("client connect");
         Ok(())
     }
 
     fn on_message(&mut self, msg: Message) -> Result<(), ws::Error> {
-        println!("msg is {}", msg);
+        info!("msg is {}", msg);
         let ret = Ast::from_str(&msg.into_text()?)
             .map(|a| a.do_stuff())
             .unwrap_or_else(|e| format!("error\n{}", e));
@@ -97,9 +99,94 @@ impl Handler for Server {
 
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         match code {
-            CloseCode::Normal => println!("The client is done with the connection."),
-            CloseCode::Away => println!("The client is leaving the site."),
-            _ => println!("The client encountered an error: {}", reason),
+            CloseCode::Normal => info!("The client is done with the connection."),
+            CloseCode::Away => info!("The client is leaving the site."),
+            _ => error!("The client encountered an error: {}", reason),
+        }
+    }
+}
+
+fn init_log() {
+    use simplelog::*;
+    CombinedLogger::init(vec![TermLogger::new(
+        LevelFilter::Info,
+        Config::default(),
+        TerminalMode::Mixed,
+    )
+    .unwrap()])
+    .unwrap();
+}
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "bot")]
+struct Config {
+    #[structopt(subcommand)]
+    sub: SubCmd,
+}
+
+#[derive(StructOpt, Debug, Eq, PartialEq)]
+#[structopt(version = "0.1", author = "fwdx")]
+pub enum SubCmd {
+    Server { port: u32 },
+    Client { url: String },
+}
+
+fn server(port: u32) {
+    info!("start server");
+    let url = format!("0.0.0.0:{}", port);
+    if let Err(e) = listen(url, |out| Server { out: out }) {
+        error!("{:?}", e);
+    }
+}
+
+struct Client {
+    out: Sender,
+}
+
+fn read_from_stdin() -> Result<String, failure::Error> {
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input)?;
+    return Ok(input);
+}
+
+impl Handler for Client {
+    fn on_open(&mut self, _: Handshake) -> Result<(), ws::Error> {
+        info!("connect to server");
+        let cmd = read_from_stdin().to_ws_err()?;
+        self.out.send(cmd)?;
+        Ok(())
+    }
+
+    fn on_message(&mut self, msg: Message) -> Result<(), ws::Error> {
+        info!("reveive form server\n{}\n", msg);
+        let cmd = read_from_stdin().to_ws_err()?;
+        self.out.send(cmd)?;
+        Ok(())
+    }
+
+    fn on_close(&mut self, code: CloseCode, reason: &str) {
+        match code {
+            CloseCode::Normal => info!("The client is done with the connection."),
+            CloseCode::Away => info!("The client is leaving the site."),
+            _ => error!("The client encountered an error: {}", reason),
+        }
+    }
+}
+
+fn client(url: String) {
+    connect(url, |out| Client { out }).unwrap();
+}
+
+fn main() {
+    init_log();
+    let config = Config::from_args();
+    info!("config {:?}", config);
+    match config.sub {
+        SubCmd::Server { port } => {
+            server(port);
+        }
+        SubCmd::Client { url } => {
+            client(url);
         }
     }
 }
@@ -135,9 +222,4 @@ mod tests {
         let res = cmd::exec("git status").unwrap();
         println!("res\n {}", res);
     }
-}
-
-fn main() {
-    println!("start server");
-    listen("0.0.0.0:3012", |out| Server { out: out }).unwrap()
 }
