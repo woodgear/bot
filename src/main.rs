@@ -129,9 +129,14 @@ struct Config {
 pub enum SubCmd {
     Server { port: u32 },
     Client { url: String },
+    Auto {
+        url:String,
+        cmd:String,
+    }
 }
 
 fn server(port: u32) {
+    init_log();
     info!("start server");
     let url = format!("0.0.0.0:{}", port);
     if let Err(e) = listen(url, |out| Server { out: out }) {
@@ -170,23 +175,76 @@ impl Handler for Client {
             CloseCode::Away => info!("The client is leaving the site."),
             _ => error!("The client encountered an error: {}", reason),
         }
+        self.out.close(ws::CloseCode::Normal);
     }
 }
 
 fn client(url: String) {
+    init_log();
+
     connect(url, |out| Client { out }).unwrap();
 }
 
-fn main() {
+struct Auto {
+    ws_sender: Sender,
+    cmd:String,
+    msg_sender: std::sync::mpsc::Sender<String>,
+}
+
+impl Handler for Auto {
+    fn on_open(&mut self, _: Handshake) -> Result<(), ws::Error> {
+        self.ws_sender.send(self.cmd.clone());
+        Ok(())
+    }
+
+    fn on_message(&mut self, msg: Message) -> Result<(), ws::Error> {
+        let msg = msg.into_text()?;
+        self.msg_sender.send(msg);
+        self.ws_sender.close(ws::CloseCode::Normal);
+        Ok(())
+    }
+
+    fn on_close(&mut self, code: CloseCode, reason: &str) {
+        match code {
+            CloseCode::Normal => info!("The client is done with the connection."),
+            CloseCode::Away => info!("The client is leaving the site."),
+            _ => error!("The client encountered an error: {}", reason),
+        }
+        self.ws_sender.close(ws::CloseCode::Normal);
+    }
+}
+
+fn on_shot(url:String,cmd:String) ->Result<String,failure::Error> {
+    use std::sync::mpsc::channel;
+    let (sender, receiver) = channel::<String>();
+
+    connect(url, move|out| { Auto {
+        ws_sender:out,
+        msg_sender:sender.clone(),
+        cmd:cmd.clone(),
+    }});
+    let msg = receiver.recv()?;
+    return Ok(msg);
+}
+
+fn auto(url:String,cmd:String) {
+    println!("auto");
     init_log();
+    let msg = on_shot(url, cmd).unwrap();
+    println!("{}",msg);
+}
+
+fn main() {
     let config = Config::from_args();
-    info!("config {:?}", config);
     match config.sub {
         SubCmd::Server { port } => {
             server(port);
         }
         SubCmd::Client { url } => {
             client(url);
+        }
+        SubCmd::Auto{url,cmd} => {
+            auto(url,cmd);
         }
     }
 }
