@@ -14,6 +14,10 @@ log = "0.4.8"
 nom = "5.1.0"
 simplelog = "0.7.4"
 structopt = "0.3.9"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.47"
+bincode = "1.2.1"
+md5 = "0.7.0"
 
 [dependencies.winapi]
 version = "0.3.8"

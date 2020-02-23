@@ -16,14 +16,26 @@ bot client URL
 ```
 url is the ws://IP:PORT,ip is ip of the machine which bot run in server mode,
 ### cmd syntax
-there is only two cmd here
+there is three cmd here
 ```
 call xxxx
 spawn xxxx
+copy-file {"from":"xxx","to":"xxx"}
 ```
-when server receiver cmd like cmd A, it will call create process `cmd /c A` wait the end of process and send all output back. similarly spawn do the same, but will not wait end of process.
+when server receiver cmd like call A, it will call create process `cmd /c A` wait the end of process and send all output back. similarly spawn do the same, but will not wait end of process.
+the response from server is json str 
+```json
+{
+    ""
+}
+```
 
 # how to install
 ```
 cargo install --git https://github.com/woodgear/bot.git
 ```
+# cli
+bot 应当提供流畅的命令行终端输入体验
+# script cli
+bot 应该很容易的被嵌入到脚本中被执行
+# script

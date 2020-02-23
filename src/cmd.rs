@@ -632,7 +632,7 @@ mod test {
 
         std::fs::create_dir_all(parent).unwrap();
         if let Ok(f) = std::fs::metadata(name) {
-            if f.len() == size.into() {
+            if f.len() == size as u64 {
                 return;
             } else {
                 std::fs::remove_file(name).unwrap();
