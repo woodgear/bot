@@ -29,11 +29,13 @@ impl Handler for Server {
         match ast {
             ServerAst::Call(data) => {
                 let ret = bot_server_impl.call(data);
+                let ret = ServerResponse::CallRet(ret);
                 let ret_json = serde_json::to_string(&ret).unwrap();
                 self.out.send(ret_json);
             }
             ServerAst::Spawn(data) => {
                 let ret = bot_server_impl.spawn(data);
+                let ret = ServerResponse::SpawnRet(ret);
                 let ret_json = serde_json::to_string(&ret).unwrap();
                 self.out.send(ret_json);
             }
@@ -46,8 +48,60 @@ impl Handler for Server {
                     cp.md5
                 );
                 let ret = bot_server_impl.copy(cp);
+                let ret = ServerResponse::CopyRet(ret);
                 let ret_json = serde_json::to_string(&ret).unwrap();
                 self.out.send(ret_json);
+            }
+            ServerAst::Tail(path) => {
+                use futures::{future::Future, stream::Stream};
+                use tail_rust::Tail;
+                use tokio::prelude::*;
+                use tokio_threadpool::ThreadPool;
+                let ws_sender = self.out.clone();
+
+                let h = std::thread::spawn(move || {
+                    let ws_sender = ws_sender.clone();
+                    let ws_sender_1 = ws_sender.clone();
+                    tokio::run(futures::lazy(move || {
+                        for e in Tail::new(&path)
+                            .unwrap()
+                            .timeout(std::time::Duration::from_secs(3))
+                            .wait()
+                        {
+                            match e {
+                                Ok(line) => {
+                                    println!("line ==> {:?}", line);
+                                    let msg = ServerResponse::TailResult(TailResult::TailContinue(
+                                        line.clone(),
+                                    ));
+                                    let msg_json = serde_json::to_string(&msg).unwrap();
+                                    ws_sender.send(msg_json);
+                                    println!("line {}", line);
+                                }
+                                Err(e) => {
+                                    if !e.is_inner() {
+                                        println!("tail timeout");
+                                        let msg =
+                                            ServerResponse::TailResult(TailResult::TailTimeout);
+                                        let msg_json = serde_json::to_string(&msg).unwrap();
+                                        ws_sender.send(msg_json);
+                                    } else {
+                                        println!("tail err {:?}", e);
+                                        let msg = ServerResponse::TailResult(TailResult::TailEnd);
+                                        let msg_json = serde_json::to_string(&msg).unwrap();
+                                        ws_sender.send(msg_json);
+                                    }
+                                }
+                            }
+                        }
+                        Ok(())
+                    }));
+                    let msg = ServerResponse::TailResult(TailResult::TailEnd);
+                    let msg_json = serde_json::to_string(&msg).unwrap();
+                    ws_sender_1.send(msg_json);
+                    println!("{:?}", "end");
+                });
+                // h.join().unwrap();
             }
         }
         Ok(())

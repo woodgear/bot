@@ -18,7 +18,11 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0.47"
 bincode = "1.2.1"
 md5 = "0.7.0"
-
+ctrlc = { version = "3.0", features = ["termination"] }
+tail-rust = { git = "https://github.com/woodgear/tail-rust.git" }
+futures = "0.1.28"
+tokio = {version="0.1.22"}
+tokio-threadpool = "0.1.15"
 [dependencies.winapi]
 version = "0.3.8"
 features = [

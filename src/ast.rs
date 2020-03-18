@@ -44,6 +44,13 @@ impl CliAst {
                         return CliAst::CopyFile(cp);
                     }),
                 ),
+                (
+                    "tail",
+                    Box::new(|data: String| {
+                        info!("tail {}", data);
+                        return CliAst::Tail(data);
+                    }),
+                ),
             ],
         );
         return ast;
@@ -65,6 +72,7 @@ impl CliAst {
                     md5: format!("{:?}", md5),
                 })
             }
+            CliAst::Tail(path) => ServerAst::Tail(path.to_owned()),
         };
         return Ok(ret);
     }

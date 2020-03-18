@@ -12,8 +12,8 @@ pub enum CliAst {
     //spawn
     Spawn(String),
     CopyFile(CopyFileCli),
+    Tail(String),
 }
-
 #[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
 pub struct CopyFileServer {
     pub from: String,
@@ -26,9 +26,25 @@ pub struct CopyFileServer {
 pub enum ServerAst {
     Call(String),
     Spawn(String),
+    Tail(String),
     CopyFile(CopyFileServer),
 }
+#[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
+pub enum ServerResponse {
+    CallRet(CallResult),
+    SpawnRet(SpawnResult),
+    CopyRet(CopyResult),
+    VersionRet(String),
+    TailResult(TailResult),
+}
 
+#[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
+pub enum TailResult {
+    Err(String),
+    TailContinue(String),
+    TailTimeout,
+    TailEnd,
+}
 #[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
 pub struct CallResult {
     pub status: i32,
