@@ -3,6 +3,7 @@ mod win_cmd;
 
 #[cfg(windows)]
 pub mod windows {
+    use super::win_cmd;
     pub fn exec(cmd: String) -> Result<String, failure::Error> {
         win_cmd::exec(format!("cmd /c {}", cmd))
     }

@@ -1,5 +1,6 @@
 #![allow(clippy::needless_return)]
 
+#[cfg(unix)]
 #[macro_use]
 extern crate shell;
 
