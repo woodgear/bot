@@ -45,6 +45,7 @@ use winapi::um::errhandlingapi::GetLastError;
 pub fn get_last_err() -> u32 {
     unsafe { GetLastError() }
 }
+
 pub fn to_nullterm<S: AsRef<OsStr>>(s: S) -> Vec<u16> {
     let s = s.as_ref();
     s.encode_wide().chain(iter::once(0_u16)).collect()

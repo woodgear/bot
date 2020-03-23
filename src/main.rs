@@ -1,5 +1,8 @@
 #![allow(clippy::needless_return)]
 
+#[macro_use]
+extern crate shell;
+
 mod cmd;
 mod common_ext;
 use structopt::StructOpt;

@@ -140,7 +140,7 @@ mod tests {
     #[test]
     fn test_cmd() {
         use crate::cmd;
-        let res = cmd::exec("git status").unwrap();
+        let res = cmd::exec("git status".to_owned()).unwrap();
         println!("res\n {}", res);
     }
 }

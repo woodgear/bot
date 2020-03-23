@@ -23,6 +23,7 @@ tail-rust = { git = "https://github.com/woodgear/tail-rust.git" }
 futures = "0.1.28"
 tokio = {version="0.1.22"}
 tokio-threadpool = "0.1.15"
+shell = { git = "https://github.com/google/rust-shell.git" }
 [dependencies.winapi]
 version = "0.3.8"
 features = [

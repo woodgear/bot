@@ -12,7 +12,7 @@ impl BotServerImpl {
 
 impl BotServer for BotServerImpl {
     fn call(&self, cmd: String) -> CallResult {
-        match cmd::exec(format!("cmd /c {}", cmd)) {
+        match cmd::exec(format!("{}", cmd)) {
             Ok(msg) => {
                 return CallResult {
                     status: 0,
@@ -29,7 +29,7 @@ impl BotServer for BotServerImpl {
     }
 
     fn spawn(&self, cmd: String) -> SpawnResult {
-        match cmd::exec_without_wait(format!("cmd /c {}", cmd)) {
+        match cmd::spawn(format!("{}", cmd)) {
             Ok(msg) => {
                 return SpawnResult {
                     status: 0,
