@@ -1,11 +1,12 @@
 use serde::{Deserialize, Serialize};
+
 #[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
 pub struct CopyFileCli {
     pub from: String,
     pub to: String,
 }
 /// the user input
-#[derive(Debug, PartialEq, Eq)]
+#[derive(EnumIntoGetters, EnumAsGetters, EnumIsA, Debug, PartialEq, Eq)]
 pub enum CliAst {
     //execute and wait output
     Call(String),
@@ -22,23 +23,38 @@ pub struct CopyFileServer {
     pub md5: String,
 }
 
-#[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
+#[derive(EnumIntoGetters, EnumAsGetters, EnumIsA, Serialize, PartialEq, Eq, Deserialize, Debug)]
 pub enum ServerAst {
     Call(String),
     Spawn(String),
     Tail(String),
     CopyFile(CopyFileServer),
+    ReadFile(String),
+    WriteFile(WriteFileReq),
 }
 #[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
+pub struct WriteFileReq {
+    pub path: String,
+    pub data: Vec<u8>,
+}
+
+#[derive(EnumIntoGetters, EnumAsGetters, EnumIsA, Serialize, PartialEq, Eq, Deserialize, Debug)]
 pub enum ServerResponse {
-    CallRet(CallResult),
-    SpawnRet(SpawnResult),
-    CopyRet(CopyResult),
-    VersionRet(String),
+    CallResult(CallResult),
+    SpawnResult(SpawnResult),
+    CopyResult(CopyResult),
+    VersionResult(String),
     TailResult(TailResult),
+    ReadFileResult(ReadFileResult),
+    WriteFileResult(WriteFileResult),
 }
 
 #[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
+pub struct ReadFileResult(pub Result<Vec<u8>, String>);
+#[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
+pub struct WriteFileResult(pub Result<(), String>);
+
+#[derive(EnumIntoGetters, EnumAsGetters, EnumIsA, Serialize, PartialEq, Eq, Deserialize, Debug)]
 pub enum TailResult {
     Err(String),
     TailContinue(String),

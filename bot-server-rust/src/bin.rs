@@ -1,20 +1,6 @@
-#![allow(clippy::needless_return)]
+use bot::{cli_auto_mode, client_mode, server_mode};
 
-#[cfg(unix)]
-#[macro_use]
-extern crate shell;
-
-mod cmd;
-mod common_ext;
 use structopt::StructOpt;
-mod ast;
-mod bot_server;
-mod cli_auto_mode;
-mod client_mode;
-mod protocol;
-mod server_mode;
-mod util;
-
 #[derive(StructOpt, Debug)]
 #[structopt(name = "bot")]
 struct Config {

@@ -84,7 +84,7 @@ impl Client {
         let msg = msg.into_text()?;
         let msg = serde_json::from_str::<ServerResponse>(&msg)?;
         match msg {
-            ServerResponse::CallRet(r) => {
+            ServerResponse::CallResult(r) => {
                 println!(
                     "success: {}\noutput:\n---\n{}\n---",
                     r.status == 0,
@@ -93,7 +93,7 @@ impl Client {
                 self.read_and_send();
                 return Ok(());
             }
-            ServerResponse::SpawnRet(r) => {
+            ServerResponse::SpawnResult(r) => {
                 if r.status == 0 {
                     println!("success");
                 } else {
@@ -102,7 +102,7 @@ impl Client {
                 self.read_and_send();
                 return Ok(());
             }
-            ServerResponse::CopyRet(r) => {
+            ServerResponse::CopyResult(r) => {
                 if r.status {
                     println!("success");
                 } else {
@@ -111,7 +111,7 @@ impl Client {
                 self.read_and_send();
                 return Ok(());
             }
-            ServerResponse::VersionRet(v) => {
+            ServerResponse::VersionResult(v) => {
                 println!("{}", v);
                 self.read_and_send();
                 return Ok(());
@@ -135,6 +135,9 @@ impl Client {
                     return Ok(());
                 }
             },
+            _ => {
+                info!("not support yet");
+            }
         }
         Ok(())
     }

@@ -23,6 +23,7 @@ tail-rust = { git = "https://github.com/woodgear/tail-rust.git" }
 futures = "0.1.28"
 tokio = {version="0.1.22"}
 tokio-threadpool = "0.1.15"
+enum-methods = "0.0.8"
 
 [target.'cfg(unix)'.dependencies]
 shell = { git = "https://github.com/google/rust-shell.git" }
@@ -60,3 +61,10 @@ features = [
     "synchapi",
     "userenv",
     "winuser",]
+[lib]
+name = "bot"
+path = "src/lib.rs"
+
+[[bin]]
+name = "bot"
+path = "src/bin.rs"

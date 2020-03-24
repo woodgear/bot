@@ -88,6 +88,19 @@ impl ServerAst {
         Ok(this)
     }
 }
+
+impl ServerResponse {
+    pub fn from_str(msg: &String) -> Result<Self, failure::Error> {
+        let this: Self = serde_json::from_str(msg)?;
+        Ok(this)
+    }
+
+    pub fn from_binary(buff: &Vec<u8>) -> Result<Self, failure::Error> {
+        let this: Self = bincode::deserialize(buff)?;
+        Ok(this)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
