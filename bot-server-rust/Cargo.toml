@@ -24,6 +24,9 @@ futures = "0.1.28"
 tokio = {version="0.1.22"}
 tokio-threadpool = "0.1.15"
 enum-methods = "0.0.8"
+tempdir = "0.3.7"
+declare-fs = { git = "https://github.com/woodgear/declarative-fs.git" }
+rand = "0.7.3"
 
 [target.'cfg(unix)'.dependencies]
 shell = { git = "https://github.com/google/rust-shell.git" }

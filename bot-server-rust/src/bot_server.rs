@@ -85,6 +85,27 @@ impl BotServer for BotServerImpl {
         };
     }
 
+    fn copy_dir(&self, cp: CopyDirServer) -> CopyDirResult {
+        fn do_cp(cp: CopyDirServer) -> Result<(), failure::Error> {
+            let tmp_dir = tempdir::TempDir::new("temp-zip_dir")?;
+            let zip_path = tmp_dir.path().join("temp.zip");
+            std::fs::write(&zip_path,cp.data)?;
+            declare_fs::unzip(&zip_path,cp.to)?;
+            Ok(())
+        }
+
+        if let Err(e) = do_cp(cp) {
+            return CopyDirResult {
+                status: false,
+                err_msg: e.to_string(),
+            };
+        }
+        return CopyDirResult {
+            status: true,
+            err_msg: "".to_owned(),
+        };
+    }
+
     fn vresion(&self) -> String {
         return "0.0.1".to_string();
     }

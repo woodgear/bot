@@ -68,6 +68,14 @@ impl Server {
     }
 }
 
+fn random_string(count:usize) ->String {
+use rand::Rng; 
+use rand::distributions::Alphanumeric;
+    rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(count)
+        .collect::<String>()
+}
 impl Handler for Server {
     fn on_open(&mut self, _: Handshake) -> Result<(), ws::Error> {
         info!("client connect");
@@ -105,15 +113,31 @@ impl Handler for Server {
                 //TODO fix this
                 unimplemented!();
             }
+
             ServerAst::ReadFile(path) => {
                 let data = std::fs::read(path).map_err(|e| e.to_string());
                 let ret = ServerResponse::ReadFileResult(ReadFileResult(data));
                 ret
             }
+            ServerAst::AssignDir(_) => {
+                use std::path::PathBuf;
+                let dir = PathBuf::from(format!("./data/{}",random_string(7)));
+                std::fs::create_dir_all(&dir);
+                let dir = dir.to_string_lossy().to_string();
+                let ret = ServerResponse::AssignDirResult(AssignDirResult{path:dir});
+                ret
+            }
+
             ServerAst::WriteFile(req) => {
                 let data = std::fs::write(req.path, req.data).map_err(|e| e.to_string());
 
                 let ret = ServerResponse::WriteFileResult(WriteFileResult(data));
+                ret
+            }
+
+            ServerAst::CopyDir(req) => {
+                let ret  = bot_server_impl.copy_dir(req);
+                let ret = ServerResponse::CopyDirResult(ret);
                 ret
             }
         };

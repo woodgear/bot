@@ -12,3 +12,5 @@ futures = "0.3.4"
 async-std = "1.5.0"
 bot = { path = "../bot-server-rust/" }
 failure = "0.1.7"
+declare-fs = { git = "https://github.com/woodgear/declarative-fs.git" }
+tempdir = "0.3.7"
