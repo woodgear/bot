@@ -12,7 +12,7 @@ macro_rules! ret_eq {
  right: `{:?}`"#, &*left_val, &*right_val);
                     return Ok(false);
                 }
-                    
+
             }
         }
     });
@@ -37,10 +37,13 @@ macro_rules! ret_eq {
     });
 }
 
-pub async fn one_shot(url: &str, req: bot::protocol::ServerAst) -> Result<bot::protocol::ServerResponse, failure::Error> {
+pub async fn one_shot(
+    url: &str,
+    req: bot::protocol::ServerAst,
+) -> Result<bot::protocol::ServerResponse, failure::Error> {
     use async_tungstenite::{async_std::connect_async, tungstenite::Message};
-    use futures::prelude::*;
     use bot::protocol::*;
+    use futures::prelude::*;
 
     let (mut ws_stream, _) = connect_async(url).await?;
     let bin_msg = req.into_binary()?;

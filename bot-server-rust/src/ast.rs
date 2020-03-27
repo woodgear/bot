@@ -94,7 +94,10 @@ impl ServerResponse {
         let this: Self = serde_json::from_str(msg)?;
         Ok(this)
     }
-
+    pub fn into_binary(&self) -> Result<Vec<u8>, failure::Error> {
+        let buff = bincode::serialize(&self)?;
+        return Ok(buff);
+    }
     pub fn from_binary(buff: &Vec<u8>) -> Result<Self, failure::Error> {
         let this: Self = bincode::deserialize(buff)?;
         Ok(this)

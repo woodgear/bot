@@ -49,8 +49,7 @@ pub struct WriteFileReq {
 }
 
 #[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
-pub struct AssignDirReq {
-}
+pub struct AssignDirReq {}
 
 #[derive(EnumIntoGetters, EnumAsGetters, EnumIsA, Serialize, PartialEq, Eq, Deserialize, Debug)]
 pub enum ServerResponse {
@@ -73,7 +72,7 @@ pub struct WriteFileResult(pub Result<(), String>);
 
 #[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
 pub struct AssignDirResult {
-   pub path:String
+    pub path: String,
 }
 
 #[derive(EnumIntoGetters, EnumAsGetters, EnumIsA, Serialize, PartialEq, Eq, Deserialize, Debug)]

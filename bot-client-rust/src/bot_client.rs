@@ -20,8 +20,8 @@ impl BotClient {
         }
     }
 
-    pub fn tail(&self) -> BotTail {
-        unimplemented!();
+    pub async fn tail(&self, path: &str) -> Result<BotTail, failure::Error> {
+        return Ok(BotTail::new(&self.server, path).await?);
     }
 
     pub fn shell(&self) -> BotShell {

@@ -89,8 +89,8 @@ impl BotServer for BotServerImpl {
         fn do_cp(cp: CopyDirServer) -> Result<(), failure::Error> {
             let tmp_dir = tempdir::TempDir::new("temp-zip_dir")?;
             let zip_path = tmp_dir.path().join("temp.zip");
-            std::fs::write(&zip_path,cp.data)?;
-            declare_fs::unzip(&zip_path,cp.to)?;
+            std::fs::write(&zip_path, cp.data)?;
+            declare_fs::unzip(&zip_path, cp.to)?;
             Ok(())
         }
 

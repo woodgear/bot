@@ -34,43 +34,43 @@ impl Server {
                     .timeout(std::time::Duration::from_secs(3))
                     .wait()
                 {
-                    match e {
+                    let msg = match e {
                         Ok(line) => {
                             println!("line ==> {:?}", line);
                             let msg =
                                 ServerResponse::TailResult(TailResult::TailContinue(line.clone()));
-                            let msg_json = serde_json::to_string(&msg).unwrap();
-                            ws_sender.send(msg_json);
-                            println!("line {}", line);
+                            msg
                         }
                         Err(e) => {
                             if !e.is_inner() {
                                 println!("tail timeout");
                                 let msg = ServerResponse::TailResult(TailResult::TailTimeout);
-                                let msg_json = serde_json::to_string(&msg).unwrap();
-                                ws_sender.send(msg_json);
+                                msg
                             } else {
                                 println!("tail err {:?}", e);
                                 let msg = ServerResponse::TailResult(TailResult::TailEnd);
-                                let msg_json = serde_json::to_string(&msg).unwrap();
-                                ws_sender.send(msg_json);
+                                msg
                             }
                         }
-                    }
+                    };
+                    let bin = Message::Binary(msg.into_binary().unwrap());
+                    ws_sender.send(bin).unwrap();
                 }
+                println!("{:?}", "tail over");
                 Ok(())
             }));
             let msg = ServerResponse::TailResult(TailResult::TailEnd);
-            let msg_json = serde_json::to_string(&msg).unwrap();
-            ws_sender_1.send(msg_json);
+            let bin = Message::Binary(msg.into_binary().unwrap());
+            ws_sender_1.send(bin).unwrap();
             println!("{:?}", "end");
         });
+        // h.join();
     }
 }
 
-fn random_string(count:usize) ->String {
-use rand::Rng; 
-use rand::distributions::Alphanumeric;
+fn random_string(count: usize) -> String {
+    use rand::distributions::Alphanumeric;
+    use rand::Rng;
     rand::thread_rng()
         .sample_iter(&Alphanumeric)
         .take(count)
@@ -85,6 +85,10 @@ impl Handler for Server {
     fn on_message(&mut self, msg: Message) -> Result<(), ws::Error> {
         let ast = ServerAst::from_binary(&msg.into_data()).to_ws_err()?;
         let bot_server_impl = BotServerImpl::new();
+        if let ServerAst::Tail(p) = &ast {
+            self.tail(p.to_string())
+        }
+
         let ret = match ast {
             ServerAst::Call(data) => {
                 let ret = bot_server_impl.call(data);
@@ -108,11 +112,7 @@ impl Handler for Server {
                 let ret = ServerResponse::CopyResult(ret);
                 ret
             }
-            ServerAst::Tail(path) => {
-                //    self.tail(path);
-                //TODO fix this
-                unimplemented!();
-            }
+            ServerAst::Tail(path) => return Ok(()),
 
             ServerAst::ReadFile(path) => {
                 let data = std::fs::read(path).map_err(|e| e.to_string());
@@ -121,10 +121,10 @@ impl Handler for Server {
             }
             ServerAst::AssignDir(_) => {
                 use std::path::PathBuf;
-                let dir = PathBuf::from(format!("./data/{}",random_string(7)));
+                let dir = PathBuf::from(format!("./data/{}", random_string(7)));
                 std::fs::create_dir_all(&dir);
                 let dir = dir.to_string_lossy().to_string();
-                let ret = ServerResponse::AssignDirResult(AssignDirResult{path:dir});
+                let ret = ServerResponse::AssignDirResult(AssignDirResult { path: dir });
                 ret
             }
 
@@ -136,7 +136,7 @@ impl Handler for Server {
             }
 
             ServerAst::CopyDir(req) => {
-                let ret  = bot_server_impl.copy_dir(req);
+                let ret = bot_server_impl.copy_dir(req);
                 let ret = ServerResponse::CopyDirResult(ret);
                 ret
             }

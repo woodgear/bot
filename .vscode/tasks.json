@@ -4,9 +4,19 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "check",
+            "label": "check-bot-client",
             "type": "shell",
-            "command": "cargo check"
+            "options": {
+                "cwd": "bot-client-rust"
+            },
+            "command": "cargo check",
+            "problemMatcher": {
+                "base": "$rustc",
+                "fileLocation": [
+                    "relative",
+                    "${workspaceRoot}/bot-client-rust"
+                ]
+            }
         }
     ]
 }
