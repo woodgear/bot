@@ -15,6 +15,13 @@ pub enum CliAst {
     CopyFile(CopyFileCli),
     Tail(String),
 }
+
+#[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
+pub struct ExecConfig {
+    pub cmd: String,
+    pub cwd: String,
+}
+
 #[derive(Serialize, PartialEq, Eq, Deserialize, Debug)]
 pub struct CopyFileServer {
     pub from: String,
@@ -32,7 +39,7 @@ pub struct CopyDirServer {
 
 #[derive(EnumIntoGetters, EnumAsGetters, EnumIsA, Serialize, PartialEq, Eq, Deserialize, Debug)]
 pub enum ServerAst {
-    Call(String),
+    Call(ExecConfig),
     Spawn(String),
     Tail(String),
     CopyFile(CopyFileServer),
@@ -106,7 +113,7 @@ pub struct CopyDirResult {
 }
 
 pub trait BotServer {
-    fn call(&self, cmd: String) -> CallResult;
+    fn call(&self, cmd:ExecConfig) -> CallResult;
     fn spawn(&self, cmd: String) -> SpawnResult;
     fn copy(&self, ast: CopyFileServer) -> CopyResult;
     fn copy_dir(&self, ast: CopyDirServer) -> CopyDirResult;

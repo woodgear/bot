@@ -29,7 +29,7 @@ macro_rules! ret_eq {
                     println!(r#"assertion failed: `(left == right)`
   left: `{:?}`,
  right: `{:?}`: {}"#, &*left_val, &*right_val,
-                           $crate::format_args!($($arg)+));
+                           std::format_args!($($arg)+));
                     return Ok(false);
                 }
             }

@@ -60,7 +60,7 @@ impl CliAst {
 impl CliAst {
     pub fn to_server_ast(&self) -> Result<ServerAst, failure::Error> {
         let ret = match self {
-            CliAst::Call(arg) => ServerAst::Call(arg.to_string()),
+            CliAst::Call(arg) => ServerAst::Call(ExecConfig{cmd:arg.to_string(),cwd:"".to_string()}),
             CliAst::Spawn(arg) => ServerAst::Spawn(arg.to_string()),
             CliAst::CopyFile(cp) => {
                 let file_buffer = std::fs::read(&cp.from)?;

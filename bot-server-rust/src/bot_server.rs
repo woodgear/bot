@@ -11,8 +11,19 @@ impl BotServerImpl {
 }
 
 impl BotServer for BotServerImpl {
-    fn call(&self, cmd: String) -> CallResult {
-        match cmd::exec(format!("{}", cmd)) {
+    fn call(&self, config: ExecConfig) -> CallResult {
+        if !config.cwd.is_empty() {
+            let cwd = std::path::Path::new(&config.cwd);
+            if !(cwd.exists() && cwd.is_dir()) {
+                return CallResult {
+                    status: -1,
+                    output: format!("{:?} is not exist or is not a dir", cwd),
+                };
+            }
+            std::env::set_current_dir(config.cwd);
+        }
+
+        match cmd::exec(format!("{}", config.cmd)) {
             Ok(msg) => {
                 return CallResult {
                     status: 0,

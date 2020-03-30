@@ -21,8 +21,9 @@ impl BotShell {
         }
         return Err(failure::err_msg(out.err_msg));
     }
-    pub async fn exec(&self, cmd: &str) -> Result<String, failure::Error> {
-        let res = one_shot(&self.server, ServerAst::Call(cmd.to_string())).await?;
+    pub async fn exec(&self, config: ExecConfig) -> Result<String, failure::Error> {
+        let res = one_shot(&self.server, ServerAst::Call(config)).await?;
+
         let out = res.into_call_result();
         if out.status == 0 {
             return Ok(out.output);

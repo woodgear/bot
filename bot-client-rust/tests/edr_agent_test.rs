@@ -1,42 +1,106 @@
 use async_std::stream::StreamExt;
 use async_std::task;
+use bot::protocol::ExecConfig;
 use bot_client_rust::{prelude::*, ret_eq};
 use std::path::PathBuf;
+use std::time::Duration;
+async fn init_package(pipeline_id: String) {}
 
 async fn async_test_install() -> Result<bool, failure::Error> {
-    let url = "ws://127.0.0.1:12345";
-    let bot = BotClient::new(url);
+    let bot = BotClient::new("ws://127.0.0.1:12345");
     let fs = bot.fs();
     let bs = bot.shell();
-    let mut tail = bot
-        .tail(r#"C:\Users\developer\work\lab\bot\test.log"#)
-        .await?;
-    println!("{:?}", "async_test_install");
+
     // let r_root = fs.assign_dir().await?;
     // let runtime = PathBuf::from(&r_root).join("runtime");
-    // fs.copy_dir(r#"C:\Users\developer\Desktop\runtime"#, &runtime)
-    //     .await?;
+    let runtime =
+        PathBuf::from(r#"C:\Users\developer\work\lab\bot\bot-server-rust\data\QhHFoSt\runtime"#);
+    let runtime_str = runtime.to_string_lossy().to_string();
+    let mut tail = bot
+        .tail(&format!(r#"{}\log\3rt\edr-agent.log"#, runtime_str))
+        .await?;
+    ret_eq!(bs.service_exist("edrnpf").await?, false);
+    ret_eq!(bs.service_exist("registry_driver").await?, false);
+    ret_eq!(bs.service_exist("trantect-edr-file-system").await?, false);
+    let cmd = format!(r#"{}\edr_agent.exe install"#, runtime_str);
+    println!("{:?} {}", "start install", cmd);
+    let res = futures::join!(
+        StreamAssert::new(
+            vec!["edr-client start install", "edr-client complete install"],
+            vec!["Error"],
+            "edr-client complete install",
+            tail,
+            1 * 30,
+        ),
+        bs.exec(ExecConfig {
+            cmd,
+            cwd: runtime_str.to_string(),
+        }),
+    );
 
-    // ret_eq!(bs.service_exist("edrnpf").await?, false);
-    // ret_eq!(bs.service_exist("registry_driver").await?, false);
-    // ret_eq!(bs.service_exist("trantect-edr-file-system").await?, false);
-    // tail
-    // bs.exec(&format!(r#"{}\edr_agent.exe install"#,root_path)).await?;
+    ret_eq!(res.0?,true,"should match log");
 
-    // tail.should_see("",1.secs())
-    //     .shoud_not_seed("error",4.ses()).await;
+    println!("{:?}", "install over");
+    ret_eq!(
+        bs.service_exist("edrnpf").await?,
+        true,
+        "edrnpf should exist"
+    );
+    ret_eq!(
+        bs.service_exist("trantect-edr-registry").await?,
+        true,
+        "reg should exist"
+    );
+    ret_eq!(
+        bs.service_exist("trantect-edr-file-system").await?,
+        true,
+        "edr-file should exist"
+    );
 
-    // ret_eq!(bs.service_exist("edrnpf").await?,true);
-    // ret_eq!(bs.service_exist("registry_driver").await?,true);
-    // ret_eq!(bs.service_exist("trantect-edr-file-system").await?,true);
+    //旧的服务名应当被删掉
+    ret_eq!(bs.service_exist("registry_driver").await?, false);
 
-    // ret_eq!(bs.service_running("edrnpf").await?,true);
-    // ret_eq!(bs.service_running("registry_driver").await?,true);
-    // ret_eq!(bs.service_running("trantect-edr-file-system").await?,true);
-    while let Some(v) = tail.next().await {
-        println!("{:?}", v);
-    }
-    println!("{:?}", "over");
+    ret_eq!(
+        bs.service_running("edrnpf").await?,
+        false,
+        "edrnpf should not running"
+    );
+    ret_eq!(
+        bs.service_running("trantect-edr-registry").await?,
+        false,
+        "edr-registry should not running"
+    );
+    ret_eq!(
+        bs.service_running("trantect-edr-file-system").await?,
+        false,
+        "edr-file should not running"
+    );
+
+    let cmd = format!(r#"{}\edr_agent.exe uninstall"#, runtime_str);
+    println!("{:?} {}", "start uninstall", cmd);
+
+
+
+    let res = bs.exec(ExecConfig {
+        cmd,
+        cwd: runtime_str.to_string(),
+    }).await;
+    println!("uninstall over res {:?}", res);
+    ret_eq!(
+        bs.service_exist("edrnpf").await?,
+        false,
+        "edrnpf should not exist"
+    );
+    ret_eq!(
+        bs.service_exist("trantect-edr-registry").await?,
+        false,
+        "reg should not exist"
+    );
+    ret_eq!(
+        bs.service_exist("trantect-edr-file-system").await?,
+        false,
+        "edr-file should not exist"
+    );
     Ok(true)
 }
 
