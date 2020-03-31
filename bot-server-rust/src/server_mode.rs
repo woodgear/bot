@@ -4,6 +4,7 @@ use crate::protocol::*;
 use crate::util::*;
 use log::*;
 use ws::{connect, listen, CloseCode, Handler, Handshake, Message, Sender};
+use std::path::PathBuf;
 
 pub fn server(port: u32) {
     init_log();
@@ -76,6 +77,14 @@ fn random_string(count: usize) -> String {
         .take(count)
         .collect::<String>()
 }
+
+fn current_exe_dir() -> Result<PathBuf, failure::Error> {
+    return std::env::current_exe()?
+        .parent()
+        .map(|p|p.to_path_buf())
+        .ok_or(failure::err_msg("could not find parent dir"));
+}
+
 impl Handler for Server {
     fn on_open(&mut self, _: Handshake) -> Result<(), ws::Error> {
         info!("client connect");
@@ -121,7 +130,8 @@ impl Handler for Server {
             }
             ServerAst::AssignDir(_) => {
                 use std::path::PathBuf;
-                let dir = PathBuf::from(format!("./data/{}", random_string(7)));
+                let cwd =std::env::current_dir().unwrap();
+                let dir = cwd.join("data").join(random_string(7));
                 std::fs::create_dir_all(&dir);
                 let dir = dir.to_string_lossy().to_string();
                 let ret = ServerResponse::AssignDirResult(AssignDirResult { path: dir });

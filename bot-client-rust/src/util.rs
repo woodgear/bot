@@ -19,7 +19,7 @@ macro_rules! ret_eq {
     ($left:expr, $right:expr,) => ({
         $crate::assert_eq!($left, $right)
     });
-    ($left:expr, $right:expr, $($arg:tt)+) => ({
+    ($left:expr, $right:expr, $msg:expr) => ({
         match (&($left), &($right)) {
             (left_val, right_val) => {
                 if !(*left_val == *right_val) {
@@ -29,7 +29,7 @@ macro_rules! ret_eq {
                     println!(r#"assertion failed: `(left == right)`
   left: `{:?}`,
  right: `{:?}`: {}"#, &*left_val, &*right_val,
-                           std::format_args!($($arg)+));
+                           $msg);
                     return Ok(false);
                 }
             }
