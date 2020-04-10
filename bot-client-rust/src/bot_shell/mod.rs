@@ -1,8 +1,6 @@
 use crate::util::one_shot;
 use bot::{ast::*, protocol::*};
 
-pub mod bot_shell_ext_service;
-
 pub struct BotShell {
     pub server: String,
 }

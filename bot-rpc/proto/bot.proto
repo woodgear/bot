@@ -1,0 +1,61 @@
+syntax = "proto3";
+message  ExecRequest{
+    string exe_path = 1;
+    string arg = 2;
+}
+
+message  ExecResponse {
+    int32 status = 1;
+    bytes output  = 2; 
+}
+
+message  TailRequest{
+}
+
+message  TailResponse{
+}
+
+message  SpawnRequest{
+}
+
+message  SpawnResponse{
+}
+
+message  CopyFileRequest{
+}
+
+message  CopyFileResponse{
+}
+
+message  CopyDirRequest{
+}
+message  CopyDirResponse{
+}
+message  AssignDirRequest{
+}
+message  AssignDirResponse{
+
+}
+message  ReadFileRequest{
+
+}
+message  ReadFileResponse{
+
+}
+
+message  WriteFileRequest{
+
+}
+message  WriteFileResponse{
+
+}
+service Bot {
+    rpc Exec(ExecRequest) returns (ExecResponse) ;
+    rpc Tail(TailRequest) returns (stream TailResponse) ;
+    rpc Spawn(SpawnRequest) returns (SpawnResponse) ;
+    rpc CopyFile(CopyFileRequest) returns (CopyFileResponse) ;
+    rpc CopyDir(CopyDirRequest) returns (CopyDirResponse) ;
+    rpc AssignDir(AssignDirRequest) returns (AssignDirResponse) ;
+    rpc ReadFile(ReadFileRequest) returns (ReadFileResponse) ;
+    rpc WriteFile(WriteFileRequest) returns (WriteFileResponse) ;
+}

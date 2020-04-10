@@ -372,6 +372,7 @@ pub struct Exec {
     pub disable_wow64_redirect_on_x64: bool,
     pub as_user: bool, //run with user token
     pub break_away_from_job: bool,
+    pub create_new_process_group: bool,
 }
 
 impl Exec {
@@ -404,6 +405,10 @@ impl Exec {
 
     pub fn break_away_from_job(mut self) -> Self {
         self.break_away_from_job = true;
+        return self;
+    }
+    pub fn create_new_process_group(mut self) -> Self {
+        self.create_new_process_group = true;
         return self;
     }
 }
@@ -553,6 +558,9 @@ impl Exec {
             if config.break_away_from_job {
                 create_flags |= CREATE_BREAKAWAY_FROM_JOB;
             }
+            if config.create_new_process_group {
+                create_flags |= CREATE_NEW_PROCESS_GROUP;
+            }
             create_flags
         };
         let mut create_process_config = CreateProcessConfig::default();
@@ -608,6 +616,7 @@ mod exec_wrapper {
     }
 
     pub fn exec_without_wait<S: AsRef<OsStr>>(cmd_line: S) -> Result<(), Error> {
+        // Exec::new(cmd_line).create_new_process_group().run()?;
         Exec::new(cmd_line).run()?;
         Ok(())
     }

@@ -1,0 +1,13 @@
+[package]
+name = "bot-rpc"
+version = "0.1.0"
+authors = ["saber <saber.wu@trantect.com>"]
+edition = "2018"
+build ="build.rs"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[build-dependencies]
+protoc-rust-grpc = "0.6.2"
+
+[dependencies]
+grpc = "0.6.2"
+protobuf = "2.8.*"

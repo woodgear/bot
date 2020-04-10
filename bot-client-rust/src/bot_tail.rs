@@ -117,7 +117,7 @@ impl StreamAssert {
             }
             return pre;
         });
-        println!("{} {}",should_see_count,self.should_see.len());
+        println!("{} {}", should_see_count, self.should_see.len());
         if should_see_count == self.should_see.len() {
             return true;
         }
@@ -135,9 +135,9 @@ impl StreamAssert {
                 return Some(false);
             }
             for (index, keyword) in self.should_see.iter().enumerate() {
-                println!("xxx {} | {}",line,keyword);
+                println!("xxx {} | {}", line, keyword);
                 if line.contains(keyword) {
-                    println!("i see {:?}",keyword);
+                    println!("i see {:?}", keyword);
                     self.should_see_map.insert(index, true);
                 }
             }

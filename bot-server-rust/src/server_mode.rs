@@ -3,8 +3,8 @@ use crate::common_ext::*;
 use crate::protocol::*;
 use crate::util::*;
 use log::*;
-use ws::{connect, listen, CloseCode, Handler, Handshake, Message, Sender};
 use std::path::PathBuf;
+use ws::{connect, listen, CloseCode, Handler, Handshake, Message, Sender};
 
 pub fn server(port: u32) {
     init_log();
@@ -81,7 +81,7 @@ fn random_string(count: usize) -> String {
 fn current_exe_dir() -> Result<PathBuf, failure::Error> {
     return std::env::current_exe()?
         .parent()
-        .map(|p|p.to_path_buf())
+        .map(|p| p.to_path_buf())
         .ok_or(failure::err_msg("could not find parent dir"));
 }
 
@@ -130,8 +130,9 @@ impl Handler for Server {
             }
             ServerAst::AssignDir(_) => {
                 use std::path::PathBuf;
-                let cwd =std::env::current_dir().unwrap();
+                let cwd = std::env::current_dir().unwrap();
                 let dir = cwd.join("data").join(random_string(7));
+                println!("assign dir {:?}", dir);
                 std::fs::create_dir_all(&dir);
                 let dir = dir.to_string_lossy().to_string();
                 let ret = ServerResponse::AssignDirResult(AssignDirResult { path: dir });
@@ -146,6 +147,7 @@ impl Handler for Server {
             }
 
             ServerAst::CopyDir(req) => {
+                println!("{:?} {:?}", req.from, req.to);
                 let ret = bot_server_impl.copy_dir(req);
                 let ret = ServerResponse::CopyDirResult(ret);
                 ret

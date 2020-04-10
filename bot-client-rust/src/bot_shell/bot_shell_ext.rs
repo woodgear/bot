@@ -29,3 +29,10 @@ impl BotShell {
         return Ok(res.to_ascii_lowercase().contains("running"));
     }
 }
+
+
+impl BotShell {
+    pub async fn process_exist(&self, name: &str) -> Result<bool, failure::Error> { 
+        
+    }
+}

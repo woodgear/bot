@@ -202,6 +202,7 @@ dependencies = [
  "log 0.4.8",
  "md5",
  "nom 5.1.1",
+ "path-slash",
  "rand 0.7.3",
  "serde",
  "serde_json",
@@ -1230,6 +1231,12 @@ dependencies = [
  "smallvec 1.2.0",
  "winapi 0.3.8",
 ]
+
+[[package]]
+name = "path-slash"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0858af4d9136275541f4eac7be1af70add84cf356d901799b065ac1b8ff6e2f"
 
 [[package]]
 name = "percent-encoding"

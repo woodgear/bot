@@ -113,7 +113,7 @@ pub struct CopyDirResult {
 }
 
 pub trait BotServer {
-    fn call(&self, cmd:ExecConfig) -> CallResult;
+    fn call(&self, cmd: ExecConfig) -> CallResult;
     fn spawn(&self, cmd: String) -> SpawnResult;
     fn copy(&self, ast: CopyFileServer) -> CopyResult;
     fn copy_dir(&self, ast: CopyDirServer) -> CopyDirResult;

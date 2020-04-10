@@ -12,31 +12,38 @@ impl BotServerImpl {
 
 impl BotServer for BotServerImpl {
     fn call(&self, config: ExecConfig) -> CallResult {
-        if !config.cwd.is_empty() {
-            let cwd = std::path::Path::new(&config.cwd);
-            if !(cwd.exists() && cwd.is_dir()) {
-                return CallResult {
-                    status: -1,
-                    output: format!("{:?} is not exist or is not a dir", cwd),
-                };
+        return std::thread::spawn(move || {
+            let cwd = std::env::current_dir().unwrap();
+            if !config.cwd.is_empty() {
+                let cwd = std::path::Path::new(&config.cwd);
+                if !(cwd.exists() && cwd.is_dir()) {
+                    return CallResult {
+                        status: -1,
+                        output: format!("{:?} is not exist or is not a dir", cwd),
+                    };
+                }
+                std::env::set_current_dir(config.cwd);
             }
-            std::env::set_current_dir(config.cwd);
-        }
 
-        match cmd::exec(format!("{}", config.cmd)) {
-            Ok(msg) => {
-                return CallResult {
-                    status: 0,
-                    output: msg,
+            let res = cmd::exec(format!("{}", config.cmd));
+            std::env::set_current_dir(cwd).unwrap();
+            match res {
+                Ok(msg) => {
+                    return CallResult {
+                        status: 0,
+                        output: msg,
+                    }
+                }
+                Err(e) => {
+                    return CallResult {
+                        status: -1,
+                        output: e.to_string(),
+                    }
                 }
             }
-            Err(e) => {
-                return CallResult {
-                    status: -1,
-                    output: e.to_string(),
-                }
-            }
-        }
+        })
+        .join()
+        .unwrap();
     }
 
     fn spawn(&self, cmd: String) -> SpawnResult {
@@ -49,7 +56,7 @@ impl BotServer for BotServerImpl {
             }
             Err(e) => {
                 return SpawnResult {
-                    status: 0,
+                    status: -1,
                     err_msg: e.to_string(),
                 }
             }
